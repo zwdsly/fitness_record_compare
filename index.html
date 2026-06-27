@@ -1,0 +1,2070 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>形迹</title>
+<!-- Modern UI crop aspect + export badge spacing fix: 2026-06-26 -->
+
+<style>
+* { box-sizing: border-box; }
+:root {
+  --bg-0: #f7f9ff;
+  --bg-1: #eef7ff;
+  --card: rgba(255,255,255,.82);
+  --card-solid: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --soft: #f3f6fb;
+  --border: rgba(17,24,39,.10);
+  --border-strong: rgba(17,24,39,.16);
+  --shadow: 0 24px 70px rgba(15,23,42,.10);
+  --shadow-soft: 0 14px 36px rgba(15,23,42,.08);
+  --green: #2fd66f;
+  --green-dark: #12b85a;
+  --purple: #7557ff;
+  --purple-dark: #5d3ff0;
+  --blue: #18c6c3;
+  --blue-dark: #0aa6a3;
+  --red: #f43f5e;
+  --orange: #ff9d42;
+  --radius-xl: 30px;
+  --radius-lg: 24px;
+  --radius-md: 18px;
+  --glass-blur: blur(22px) saturate(145%);
+}
+html {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  background: var(--bg-0);
+}
+body {
+  margin: 0;
+  min-height: 100%;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(47,214,111,.22), transparent 34%),
+    radial-gradient(circle at 88% 12%, rgba(117,87,255,.22), transparent 34%),
+    radial-gradient(circle at 80% 92%, rgba(24,198,195,.18), transparent 36%),
+    linear-gradient(135deg, var(--bg-0), var(--bg-1));
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(255,255,255,.55) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.55) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,.55), transparent 70%);
+}
+button, input, select { font-family: inherit; }
+button { cursor: pointer; min-width: 0; }
+input, select, button { -webkit-tap-highlight-color: transparent; }
+.app {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 18px 18px 28px;
+  position: relative;
+}
+.header {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 10px;
+}
+.header h1 {
+  margin: 0;
+  font-size: clamp(26px, 3vw, 40px);
+  font-weight: 950;
+  letter-spacing: .02em;
+  line-height: 1.05;
+}
+.settings-btn {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 50px;
+  border: 1px solid rgba(255,255,255,.7);
+  border-radius: 18px;
+  background: rgba(255,255,255,.74);
+  color: #111827;
+  font-size: 21px;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: var(--glass-blur);
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.settings-btn:hover { transform: translateY(calc(-50% - 1px)); background: #fff; box-shadow: 0 18px 44px rgba(15,23,42,.12); }
+.layout {
+  display: grid;
+  grid-template-columns: minmax(330px, 420px) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.left-panel, .preview-panel {
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.72);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow);
+  backdrop-filter: var(--glass-blur);
+}
+.left-panel {
+  background: rgba(255,255,255,.70);
+  padding: 22px;
+  height: calc(100dvh - 122px);
+  min-height: 560px;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+.preview-panel {
+  position: sticky;
+  top: 18px;
+  background: linear-gradient(145deg, rgba(19,22,31,.96), rgba(11,14,21,.98));
+  padding: 18px;
+  border-radius: 32px;
+  border-color: rgba(255,255,255,.12);
+  box-shadow: 0 24px 70px rgba(15,23,42,.22);
+}
+.timeline-title {
+  font-size: clamp(20px, 2vw, 26px);
+  font-weight: 950;
+  margin: 0 0 18px;
+  letter-spacing: .01em;
+}
+.month-title {
+  font-size: clamp(34px, 4vw, 52px);
+  line-height: .95;
+  font-weight: 950;
+  margin: 28px 0 18px;
+  letter-spacing: -.03em;
+}
+.month-title:first-child { margin-top: 0; }
+.record-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.record-card {
+  background: rgba(255,255,255,.86);
+  border: 1px solid rgba(17,24,39,.08);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(15,23,42,.07);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+}
+.record-card:hover { transform: translateY(-3px); box-shadow: 0 18px 42px rgba(15,23,42,.12); background: #fff; }
+.record-card.active {
+  border-color: rgba(47,214,111,.95);
+  box-shadow: 0 0 0 3px rgba(47,214,111,.20), 0 18px 46px rgba(47,214,111,.12);
+}
+.thumb-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.14 / 1;
+  background: linear-gradient(135deg, #edf2f7, #f8fafc);
+  overflow: hidden;
+}
+.thumb-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .25s ease;
+}
+.record-card:hover .thumb-box img { transform: scale(1.035); }
+.day-mark {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  color: #fff;
+  font-size: clamp(22px, 2.5vw, 32px);
+  font-weight: 850;
+  line-height: 1;
+  text-shadow: 0 4px 16px rgba(0,0,0,.55);
+}
+.card-info {
+  padding: 12px 14px 14px;
+  font-size: clamp(14px, 1.25vw, 16px);
+  line-height: 1.55;
+  color: #1f2937;
+}
+.card-info b { font-weight: 950; color: #0f172a; }
+.empty-box {
+  min-height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 18px;
+  font-weight: 850;
+  text-align: center;
+  line-height: 1.7;
+  border: 1px dashed rgba(148,163,184,.42);
+  border-radius: 22px;
+  background: rgba(255,255,255,.42);
+}
+.preview-frame {
+  width: min(100%, 430px, calc((100dvh - 230px) * 9 / 16));
+  aspect-ratio: 9 / 16;
+  height: auto;
+  min-height: 0;
+  margin: 0 auto;
+  background: #151515;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: inline-size;
+}
+.preview-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), inset 0 -26cqw 42cqw rgba(0,0,0,.22), inset 0 24cqw 36cqw rgba(0,0,0,.16);
+  z-index: 2;
+}
+.preview-frame.empty {
+  color: rgba(255,255,255,.62);
+  font-size: 18px;
+  font-weight: 850;
+  text-align: center;
+}
+.preview-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  z-index: 1;
+}
+.date-badge {
+  position: absolute;
+  z-index: 3;
+  top: 3.75%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(8,12,20,.64);
+  color: #fff;
+  padding: clamp(7px, 1.15cqw, 11px) clamp(16px, 4.1cqw, 24px);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: clamp(12px, 2.25cqw, 18px);
+  font-size: clamp(18px, 5cqw, 28px);
+  font-weight: 950;
+  white-space: nowrap;
+  backdrop-filter: blur(10px) saturate(115%);
+  box-shadow: 0 10px 24px rgba(0,0,0,.14);
+}
+.info-badges {
+  position: absolute;
+  z-index: 3;
+  left: 5%;
+  right: 5%;
+  bottom: 5.8%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: clamp(7px, 2.4cqw, 14px);
+}
+.info-badge {
+  min-width: 0;
+  background: rgba(8,12,20,.60);
+  color: #fff;
+  padding: clamp(6px, .95cqw, 9px) clamp(10px, 2.5cqw, 16px);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: clamp(10px, 1.65cqw, 15px);
+  font-size: clamp(12px, 3.55cqw, 18px);
+  font-weight: 950;
+  white-space: nowrap;
+  backdrop-filter: blur(9px) saturate(110%);
+  box-shadow: 0 9px 22px rgba(0,0,0,.13);
+}
+.action-bar {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.main-btn {
+  height: 52px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  font-size: clamp(14px, 1.45vw, 18px);
+  font-weight: 950;
+  white-space: nowrap;
+  letter-spacing: -.01em;
+  transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+  box-shadow: 0 12px 28px rgba(15,23,42,.16);
+}
+.main-btn:hover { transform: translateY(-2px); filter: saturate(1.08); }
+.main-btn:active { transform: translateY(0); }
+.add-main { background: linear-gradient(135deg, #34d86f, #13c77f); color: #fff; }
+.add-main:hover { background: linear-gradient(135deg, #35e978, #12bd77); }
+.export-img-main { background: rgba(255,255,255,.96); color: #0f172a; border-color: rgba(255,255,255,.65); box-shadow: 0 12px 28px rgba(255,255,255,.08); }
+.export-video-main { background: linear-gradient(135deg, #8b5cf6, #5b5ff7); color: #fff; }
+.export-video-main:hover { background: linear-gradient(135deg, #9468ff, #4f46e5); }
+.manage-main { background: linear-gradient(135deg, #20d6cc, #08abc4); color: #fff; }
+.manage-main:hover { background: linear-gradient(135deg, #27e5da, #079db6); }
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,.45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+  backdrop-filter: blur(10px);
+}
+.modal-mask.show { display: flex; }
+.modal {
+  width: min(920px, calc(100vw - 32px));
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(255,255,255,.74);
+  border-radius: 30px;
+  padding: 28px;
+  box-shadow: 0 34px 92px rgba(15,23,42,.22);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  position: relative;
+  backdrop-filter: var(--glass-blur);
+}
+.modal.small { width: min(680px, calc(100vw - 32px)); }
+.modal h2 {
+  margin: 0 0 20px;
+  font-size: clamp(25px, 2.7vw, 34px);
+  line-height: 1.15;
+  font-weight: 950;
+  letter-spacing: -.02em;
+}
+.settings-card { width: min(760px, calc(100vw - 32px)); padding-right: 28px; }
+.settings-fields { grid-template-columns: 1fr 1fr; }
+.settings-close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(17,24,39,.08);
+  border-radius: 15px;
+  background: rgba(248,250,252,.86);
+  color: #0f172a;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 24px rgba(15,23,42,.08);
+}
+.settings-close-btn:hover { background: #fff; }
+.settings-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.settings-actions .modal-btn { width: 100%; padding: 0 14px; }
+.settings-actions .save-btn,
+.settings-actions .export-images-btn,
+.settings-actions .danger-btn { grid-column: 1 / -1; }
+.export-images-btn {
+  background: linear-gradient(135deg, #18c6c3, #7557ff);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 16px 34px rgba(24,198,195,.20);
+}
+.export-images-btn:hover { transform: translateY(-1px); box-shadow: 0 22px 44px rgba(117,87,255,.22); }
+.author-card {
+  margin-top: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(15,23,42,.94), rgba(30,41,59,.86));
+  border: 1px solid rgba(255,255,255,.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 16px 36px rgba(15,23,42,.13);
+  color: #fff;
+}
+.author-logo-wrap {
+  width: 58px;
+  height: 38px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.18);
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+.author-logo { width: 50px; height: auto; display: block; }
+.author-text { min-width: 0; line-height: 1.25; }
+.author-text span { display: block; font-size: 12px; font-weight: 900; color: rgba(255,255,255,.58); margin-bottom: 2px; }
+.author-text b { display: block; font-size: 15px; font-weight: 950; color: #fff; letter-spacing: .01em; }
+.file-picker {
+  width: 100%;
+  min-height: 72px;
+  border: 1px dashed rgba(47,214,111,.55);
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(47,214,111,.12), rgba(24,198,195,.10));
+  color: #0f8f58;
+  font-size: 18px;
+  font-weight: 950;
+  margin-bottom: 14px;
+}
+.file-info { color: var(--muted); font-size: 14px; margin: -2px 0 16px; }
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.form-field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 900;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+.form-field input, .form-field select {
+  width: 100%;
+  height: 50px;
+  border: 1px solid rgba(17,24,39,.14);
+  border-radius: 16px;
+  padding: 0 14px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #111827;
+  outline: none;
+  background: rgba(255,255,255,.84);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+.form-field input:focus, .form-field select:focus {
+  border-color: rgba(47,214,111,.9);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(47,214,111,.16);
+}
+.note { color: #64748b; line-height: 1.65; margin: 16px 0 0; font-size: 14px; }
+.modal-actions {
+  margin-top: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.modal-btn {
+  height: 50px;
+  border-radius: 16px;
+  padding: 0 22px;
+  border: 1px solid transparent;
+  font-size: 16px;
+  font-weight: 950;
+  white-space: nowrap;
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+}
+.modal-btn:hover { transform: translateY(-1px); }
+.save-btn { background: linear-gradient(135deg, #34d86f, #13c77f); color: #fff; box-shadow: 0 14px 30px rgba(47,214,111,.25); }
+.cancel-btn { background: rgba(255,255,255,.86); color: #111827; border-color: rgba(17,24,39,.12); }
+.danger-btn { background: rgba(255,241,244,.92); color: #e11d48; border-color: rgba(244,63,94,.18); }
+.progress-text { font-size: 16px; line-height: 1.8; color: #475569; }
+.crop-modal {
+  width: min(1180px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.crop-modal h2 { flex: 0 0 auto; }
+.crop-wrap {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: linear-gradient(145deg, #121620, #080b10);
+  border-radius: 22px;
+  padding: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.crop-canvas {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: min(56dvh, 620px);
+  display: block;
+  margin: 0 auto;
+  border-radius: 16px;
+  background: #111827;
+  touch-action: none;
+  cursor: default;
+}
+.crop-tools {
+  flex: 0 0 auto;
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: minmax(300px, auto) minmax(220px, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.54);
+  border: 1px solid rgba(17,24,39,.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.74);
+}
+.crop-aspects { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+.crop-aspects button {
+  border: 1px solid rgba(17,24,39,.12);
+  background: rgba(255,255,255,.86);
+  color: #111827;
+  border-radius: 14px;
+  padding: 9px 14px;
+  font-size: 14px;
+  font-weight: 950;
+}
+.crop-aspects button.active { background: linear-gradient(135deg, #34d86f, #13c77f); border-color: transparent; color: #fff; box-shadow: 0 12px 26px rgba(47,214,111,.22); }
+.crop-zoom-row {
+  display: grid;
+  grid-template-columns: 46px minmax(120px, 1fr);
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 950;
+}
+.crop-zoom-row input { width: 100%; accent-color: #2fd66f; }
+.crop-actions-inline {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  align-items: center;
+  gap: 10px;
+}
+.crop-actions-inline .modal-btn { height: 48px; padding: 0 22px; }
+.crop-note { flex: 0 0 auto; margin-top: 12px; }
+.batch-modal { width: min(1060px, calc(100vw - 32px)); }
+.batch-table-wrap {
+  width: 100%;
+  max-height: min(64dvh, 620px);
+  overflow: auto;
+  border: 1px solid rgba(17,24,39,.09);
+  border-radius: 22px;
+  background: rgba(255,255,255,.70);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.86);
+}
+.batch-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 760px; }
+.batch-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(248,250,252,.96);
+  color: #475569;
+  font-size: 13px;
+  font-weight: 950;
+  text-align: left;
+  padding: 12px 12px;
+  border-bottom: 1px solid rgba(17,24,39,.08);
+  backdrop-filter: blur(10px);
+}
+.batch-table td { padding: 10px 12px; border-bottom: 1px solid rgba(17,24,39,.06); vertical-align: middle; }
+.batch-table tr.batch-current td { background: rgba(47,214,111,.11); }
+.batch-table tr.batch-current td:first-child { box-shadow: inset 4px 0 0 #2fd66f; }
+.batch-table tr.batch-focus td { animation: batchFocusFlash 1.4s ease; }
+@keyframes batchFocusFlash { 0% { background: rgba(47,214,111,.26); } 45% { background: rgba(47,214,111,.20); } 100% { background: rgba(47,214,111,.11); } }
+.batch-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 16px; display: block; box-shadow: 0 8px 18px rgba(15,23,42,.10); }
+.batch-input {
+  width: 100%;
+  height: 42px;
+  border: 1px solid rgba(17,24,39,.12);
+  border-radius: 13px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-weight: 850;
+  outline: none;
+  background: rgba(255,255,255,.88);
+}
+.batch-input:focus { border-color: rgba(47,214,111,.9); box-shadow: 0 0 0 4px rgba(47,214,111,.14); }
+.batch-op { display: flex; gap: 8px; flex-wrap: wrap; }
+.batch-mini-btn { border: none; border-radius: 12px; padding: 9px 12px; font-size: 13px; font-weight: 950; }
+.batch-img-edit { background: rgba(47,214,111,.13); color: #047857; }
+.batch-replace { background: rgba(14,165,233,.12); color: #0369a1; }
+.batch-delete { background: rgba(244,63,94,.10); color: #e11d48; }
+.batch-tip { margin: -6px 0 14px; color: #64748b; font-size: 14px; line-height: 1.6; }
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  background: rgba(15,23,42,.88);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 850;
+  box-shadow: 0 18px 44px rgba(15,23,42,.22);
+  backdrop-filter: blur(12px);
+  z-index: 200;
+  display: none;
+}
+.toast.show { display: block; }
+.left-panel::-webkit-scrollbar, .modal::-webkit-scrollbar, .batch-table-wrap::-webkit-scrollbar { width: 10px; height: 10px; }
+.left-panel::-webkit-scrollbar-thumb, .modal::-webkit-scrollbar-thumb, .batch-table-wrap::-webkit-scrollbar-thumb { background: rgba(100,116,139,.38); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
+.left-panel::-webkit-scrollbar-track, .modal::-webkit-scrollbar-track, .batch-table-wrap::-webkit-scrollbar-track { background: transparent; }
+@media (max-width: 1100px) {
+  .app { max-width: 980px; }
+  .layout { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 18px; }
+  .left-panel { padding: 18px; }
+  .preview-panel { padding: 14px; }
+  .preview-frame { width: min(100%, 410px, calc((100dvh - 210px) * 9 / 16)); min-height: 0; }
+  .action-bar { gap: 10px; }
+  .main-btn { height: 48px; }
+}
+@media (max-width: 860px) {
+  .app { padding: 12px 12px 22px; }
+  .header { min-height: 58px; margin-bottom: 8px; }
+  .settings-btn { width: 46px; height: 46px; border-radius: 16px; font-size: 20px; }
+  .layout { display: flex; flex-direction: column-reverse; gap: 16px; }
+  .left-panel { width: 100%; height: auto; max-height: none; min-height: 0; overflow: visible; padding: 18px; border-radius: 26px; }
+  .preview-panel { width: 100%; position: static; padding: 14px; border-radius: 26px; }
+  .record-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .month-title { margin: 24px 0 16px; }
+  .card-info { font-size: 14px; padding: 11px 12px 13px; }
+  .day-mark { font-size: 25px; }
+  .preview-frame { width: min(100%, 390px, calc((100dvh - 200px) * 9 / 16)); min-height: 0; border-radius: 20px; }
+  .preview-frame::before { border-radius: inherit; }
+  .action-bar { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+  .main-btn { height: 46px; font-size: 14px; border-radius: 14px; }
+  .modal { padding: 22px; border-radius: 26px; }
+  .settings-card { padding-right: 22px; }
+  .settings-close-btn { top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 14px; font-size: 27px; }
+  .settings-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .settings-fields { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .batch-modal { width: calc(100vw - 24px); }
+  .crop-modal { width: calc(100vw - 24px); }
+  .crop-canvas { max-height: min(50dvh, 520px); }
+  .crop-tools { grid-template-columns: 1fr; padding: 10px; }
+  .crop-actions-inline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .crop-actions-inline .modal-btn { width: 100%; }
+}
+@media (max-width: 560px) {
+  .app { padding: 10px 10px 20px; }
+  .header { justify-content: flex-start; padding-right: 58px; }
+  .header h1 { font-size: 26px; }
+  .record-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .thumb-box { aspect-ratio: 1 / .92; }
+  .card-info { font-size: 13px; }
+  .preview-frame { width: min(100%, 360px, calc((100dvh - 180px) * 9 / 16)); min-height: 0; }
+  .info-badges { left: 4%; right: 4%; bottom: 5.8%; gap: clamp(6px, 2cqw, 10px); }
+  .info-badge { max-width: none; }
+  .action-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .main-btn { font-size: 15px; }
+  .settings-actions { grid-template-columns: 1fr; }
+  .modal-actions { display: grid; grid-template-columns: 1fr; }
+  .modal-btn { width: 100%; }
+}
+@media (max-width: 390px) {
+  .record-grid { grid-template-columns: 1fr; }
+  .preview-frame { width: min(100%, 330px, calc((100dvh - 170px) * 9 / 16)); min-height: 0; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <h1>形迹</h1>
+    <button class="settings-btn" id="settingsBtn" type="button">⚙</button>
+  </header>
+  <main class="layout">
+    <section class="left-panel">
+      <h2 class="timeline-title">照片记录</h2>
+      <div id="timeline"></div>
+      <div id="emptyBox" class="empty-box">还没有照片记录<br>点击右侧“添加照片”开始</div>
+    </section>
+    <section class="preview-panel">
+      <div class="preview-frame empty" id="previewFrame">
+        <div id="previewEmpty">请选择或添加一张照片</div>
+        <img id="previewImg" class="preview-img" alt="" style="display:none;">
+        <div id="dateBadge" class="date-badge" style="display:none;"></div>
+        <div id="infoBadges" class="info-badges" style="display:none;">
+          <div class="info-badge" id="weightBadge"></div>
+          <div class="info-badge" id="heightBadge"></div>
+          <div class="info-badge" id="bmiBadge"></div>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button id="addBtn" class="main-btn add-main" type="button">添加照片</button>
+        <button id="exportImageBtn" class="main-btn export-img-main" type="button">导出图片</button>
+        <button id="exportVideoBtn" class="main-btn export-video-main" type="button">导出视频</button>
+        <button id="manageBtn" class="main-btn manage-main" type="button">管理照片</button>
+      </div>
+    </section>
+  </main>
+</div>
+<input id="fileInput" type="file" accept="image/*" multiple hidden>
+<input id="backupInput" type="file" accept="application/json,.json" hidden>
+<input id="replaceInput" type="file" accept="image/*" hidden>
+
+<div id="addModal" class="modal-mask">
+  <div class="modal">
+    <h2>添加记录</h2>
+    <button id="chooseFilesBtn" class="file-picker" type="button">选择一张或多张照片</button>
+    <div id="fileInfo" class="file-info">未选择照片</div>
+    <div class="form-row">
+      <div class="form-field"><label>日期</label><input id="addDate" type="date"></div>
+      <div class="form-field"><label>体重 kg</label><input id="addWeight" type="number" step="0.1" placeholder="例如 83"></div>
+      <div class="form-field"><label>身高 cm</label><input id="addHeight" type="number" step="1" placeholder="例如 181"></div>
+    </div>
+    <p class="note">日期读取顺序：EXIF拍摄日期 → XMP拍摄日期 → 文件最后修改时间 → 手动填写日期。身高会自动保存，下次打开还在。</p>
+    <div class="modal-actions">
+      <button id="saveAddBtn" class="modal-btn save-btn" type="button">保存记录</button>
+      <button id="cancelAddBtn" class="modal-btn cancel-btn" type="button">取消</button>
+    </div>
+  </div>
+</div>
+
+<div id="editModal" class="modal-mask">
+  <div class="modal">
+    <h2>数据编辑</h2>
+    <div class="form-row">
+      <div class="form-field"><label>日期</label><input id="editDate" type="date"></div>
+      <div class="form-field"><label>体重 kg</label><input id="editWeight" type="number" step="0.1"></div>
+      <div class="form-field"><label>身高 cm</label><input id="editHeight" type="number" step="1"></div>
+    </div>
+    <div class="modal-actions">
+      <button id="saveEditBtn" class="modal-btn save-btn" type="button">保存修改</button>
+      <button id="cancelEditBtn" class="modal-btn cancel-btn" type="button">取消</button>
+    </div>
+  </div>
+</div>
+
+<div id="cropModal" class="modal-mask">
+  <div class="modal crop-modal">
+    <h2>图片编辑</h2>
+    <div class="crop-wrap"><canvas id="cropCanvas" class="crop-canvas" width="900" height="620"></canvas></div>
+    <div class="crop-tools">
+      <div class="crop-aspects" id="cropAspectBtns">
+        <button type="button" data-aspect="free" class="active">自由</button>
+        <button type="button" data-aspect="original">原比例</button>
+        <button type="button" data-aspect="1">1:1</button>
+        <button type="button" data-aspect="1.333333">4:3</button>
+        <button type="button" data-aspect="0.75">3:4</button>
+      </div>
+      <div class="crop-zoom-row"><span>缩放</span><input id="cropZoom" type="range" min="100" max="300" value="100"></div>
+      <div class="crop-actions-inline">
+        <button id="saveCropBtn" class="modal-btn save-btn" type="button">保存裁切</button>
+        <button id="cancelCropBtn" class="modal-btn cancel-btn" type="button">取消</button>
+      </div>
+    </div>
+    <p class="note crop-note">拖动绿色框内部可以移动图片；拖动绿色框的四边或四角可以自由调整裁切范围。保存后会替换当前记录图片，日期、体重、身高不变。</p>
+  </div>
+</div>
+
+<div id="batchModal" class="modal-mask">
+  <div class="modal batch-modal">
+    <h2>批量管理照片</h2>
+    <p class="batch-tip">可以像表格一样快速修改几十张照片的日期、身高、体重。BMI 会根据身高和体重自动重新计算。</p>
+    <div class="batch-table-wrap">
+      <table class="batch-table">
+        <thead>
+          <tr>
+            <th style="width:110px;">图片</th>
+            <th>日期</th>
+            <th>身高 cm</th>
+            <th>体重 kg</th>
+            <th style="width:250px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="batchTableBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-actions">
+      <button id="saveBatchBtn" class="modal-btn save-btn" type="button">保存全部</button>
+      <button id="closeBatchBtn" class="modal-btn cancel-btn" type="button">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="settingsModal" class="modal-mask">
+  <div class="modal small settings-card">
+    <button id="cancelSettingsBtn" class="settings-close-btn" type="button" aria-label="关闭设置">×</button>
+    <h2>设置</h2>
+    <div class="form-row settings-fields">
+      <div class="form-field"><label>默认身高 cm</label><input id="settingHeight" type="number" step="1" placeholder="例如 181"></div>
+      <div class="form-field"><label>视频每张停留</label><select id="settingDuration"><option value="100">100ms</option><option value="200">200ms</option><option value="300">300ms</option><option value="500">500ms</option><option value="1000">1秒</option><option value="2000">2秒</option><option value="3000">3秒</option></select></div>
+    </div>
+    <div class="modal-actions settings-actions">
+      <button id="saveSettingsBtn" class="modal-btn save-btn" type="button">保存设置</button>
+      <button id="exportAllImagesBtn" class="modal-btn export-images-btn" type="button">导出全部图片</button>
+      <button id="exportBackupBtn" class="modal-btn cancel-btn" type="button">导出备份</button>
+      <button id="importBackupBtn" class="modal-btn cancel-btn" type="button">导入备份</button>
+      <button id="clearAllBtn" class="modal-btn danger-btn" type="button">清空全部</button>
+    </div>
+    <div class="author-card" aria-label="作者信息">
+      <div class="author-logo-wrap"><img class="author-logo" src="data:image/png;base64,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" alt="bilibili"></div>
+      <div class="author-text"><span>作者</span><b>bilibili神召机于动</b></div>
+    </div>
+  </div>
+</div>
+
+<div id="progressModal" class="modal-mask"><div class="modal small"><h2>处理中</h2><div id="progressText" class="progress-text">请稍候...</div></div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  const DB_NAME = "fitness_record_v2_batch_db";
+  const STORE_NAME = "records";
+  const SETTINGS_KEY = "fitness_record_v2_batch_settings";
+  const $ = (id) => document.getElementById(id);
+
+  const state = {
+    db: null,
+    records: [],
+    selectedId: null,
+    pendingFiles: [],
+    replacingId: null,
+    replaceBatchScrollTop: 0,
+    editingId: null,
+    urls: [],
+    batchUrls: [],
+    previewUrl: null,
+    settings: { heightCm: "", durationMs: 1000 },
+    crop: {
+      id: null,
+      img: null,
+      cropRect: { x: 0, y: 0, w: 0, h: 0 },
+      scale: 1,
+      minScale: 1,
+      offsetX: 0,
+      offsetY: 0,
+      dragging: false,
+      lastX: 0,
+      lastY: 0,
+      aspect: "free",
+      resizeHandle: null,
+      resizing: false,
+      startX: 0,
+      startY: 0,
+      startRect: null,
+      returnToBatch: false,
+      batchScrollTop: 0
+    }
+  };
+
+  const els = {
+    timeline: $("timeline"), emptyBox: $("emptyBox"), previewFrame: $("previewFrame"), previewEmpty: $("previewEmpty"), previewImg: $("previewImg"), dateBadge: $("dateBadge"), infoBadges: $("infoBadges"), weightBadge: $("weightBadge"), heightBadge: $("heightBadge"), bmiBadge: $("bmiBadge"),
+    settingsBtn: $("settingsBtn"), addBtn: $("addBtn"), exportImageBtn: $("exportImageBtn"), exportVideoBtn: $("exportVideoBtn"), manageBtn: $("manageBtn"),
+    fileInput: $("fileInput"), backupInput: $("backupInput"), replaceInput: $("replaceInput"), addModal: $("addModal"), chooseFilesBtn: $("chooseFilesBtn"), fileInfo: $("fileInfo"), addDate: $("addDate"), addWeight: $("addWeight"), addHeight: $("addHeight"), saveAddBtn: $("saveAddBtn"), cancelAddBtn: $("cancelAddBtn"),
+    editModal: $("editModal"), editDate: $("editDate"), editWeight: $("editWeight"), editHeight: $("editHeight"), saveEditBtn: $("saveEditBtn"), cancelEditBtn: $("cancelEditBtn"),
+    cropModal: $("cropModal"), cropCanvas: $("cropCanvas"), cropZoom: $("cropZoom"), cropAspectBtns: $("cropAspectBtns"), saveCropBtn: $("saveCropBtn"), cancelCropBtn: $("cancelCropBtn"),
+    batchModal: $("batchModal"), batchTableBody: $("batchTableBody"), saveBatchBtn: $("saveBatchBtn"), closeBatchBtn: $("closeBatchBtn"),
+    settingsModal: $("settingsModal"), settingHeight: $("settingHeight"), settingDuration: $("settingDuration"), saveSettingsBtn: $("saveSettingsBtn"), exportAllImagesBtn: $("exportAllImagesBtn"), exportBackupBtn: $("exportBackupBtn"), importBackupBtn: $("importBackupBtn"), cancelSettingsBtn: $("cancelSettingsBtn"), clearAllBtn: $("clearAllBtn"),
+    progressModal: $("progressModal"), progressText: $("progressText"), toast: $("toast")
+  };
+
+  init();
+
+  async function init() {
+    bindEvents();
+    loadSettings();
+    try {
+      state.db = await openDB();
+      await reloadRecords();
+      render();
+    } catch (err) {
+      console.error(err);
+      alert("数据库打开失败。请使用 Edge 或 Chrome 浏览器打开。");
+    }
+  }
+
+  function bindEvents() {
+    els.addBtn.addEventListener("click", openAddModal);
+    els.exportImageBtn.addEventListener("click", exportCurrentImage);
+    els.exportVideoBtn.addEventListener("click", exportVideo);
+    els.manageBtn.addEventListener("click", openBatchModal);
+    els.settingsBtn.addEventListener("click", openSettingsModal);
+    els.chooseFilesBtn.addEventListener("click", () => { els.fileInput.value = ""; els.fileInput.click(); });
+    els.fileInput.addEventListener("change", onFilesSelected);
+    els.backupInput.addEventListener("change", importBackupFromInput);
+    els.replaceInput.addEventListener("change", replaceRecordImageFromInput);
+    els.saveAddBtn.addEventListener("click", saveAddRecords);
+    els.cancelAddBtn.addEventListener("click", closeAddModal);
+    els.saveEditBtn.addEventListener("click", saveEditRecord);
+    els.cancelEditBtn.addEventListener("click", closeEditModal);
+    els.cancelCropBtn.addEventListener("click", closeCropModal);
+    els.saveCropBtn.addEventListener("click", saveCropImage);
+    els.cropZoom.addEventListener("input", onCropZoom);
+    els.cropAspectBtns.addEventListener("click", function (e) {
+      const btn = e.target.closest("button[data-aspect]");
+      if (!btn) return;
+      Array.from(els.cropAspectBtns.querySelectorAll("button")).forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      setCropAspect(btn.dataset.aspect);
+    });
+    els.cropCanvas.addEventListener("pointerdown", cropPointerDown);
+    els.cropCanvas.addEventListener("pointermove", cropPointerMove);
+    els.cropCanvas.addEventListener("pointerup", cropPointerUp);
+    els.cropCanvas.addEventListener("pointercancel", cropPointerUp);
+    els.cropCanvas.addEventListener("pointerleave", () => { if (!state.crop.dragging && !state.crop.resizing) updateCropCursor(null); });
+    els.saveBatchBtn.addEventListener("click", saveBatchRecords);
+    els.closeBatchBtn.addEventListener("click", closeBatchModal);
+    els.batchTableBody.addEventListener("click", onBatchTableClick);
+    els.saveSettingsBtn.addEventListener("click", saveSettingsFromModal);
+    els.exportAllImagesBtn.addEventListener("click", exportAllImagesZip);
+    els.exportBackupBtn.addEventListener("click", exportBackup);
+    els.importBackupBtn.addEventListener("click", function () { els.backupInput.value = ""; els.backupInput.click(); });
+    els.cancelSettingsBtn.addEventListener("click", closeSettingsModal);
+    els.clearAllBtn.addEventListener("click", clearAllRecords);
+    els.timeline.addEventListener("click", onTimelineClick);
+    window.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      if (els.progressModal.classList.contains("show")) return;
+      if (els.cropModal.classList.contains("show")) { closeCropModal(); return; }
+      if (els.batchModal.classList.contains("show")) { closeBatchModal(); return; }
+      if (els.addModal.classList.contains("show")) { closeAddModal(); return; }
+      if (els.editModal.classList.contains("show")) { closeEditModal(); return; }
+      if (els.settingsModal.classList.contains("show")) { closeSettingsModal(); return; }
+    });
+  }
+
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = function () {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: "id" });
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+  function dbGetAll() { return new Promise((resolve, reject) => { const tx = state.db.transaction(STORE_NAME, "readonly"); const req = tx.objectStore(STORE_NAME).getAll(); req.onsuccess = () => resolve(req.result || []); req.onerror = () => reject(req.error); }); }
+  function dbPut(record) { return new Promise((resolve, reject) => { const tx = state.db.transaction(STORE_NAME, "readwrite"); const req = tx.objectStore(STORE_NAME).put(record); req.onsuccess = () => resolve(); req.onerror = () => reject(req.error); }); }
+  function dbDelete(id) { return new Promise((resolve, reject) => { const tx = state.db.transaction(STORE_NAME, "readwrite"); const req = tx.objectStore(STORE_NAME).delete(id); req.onsuccess = () => resolve(); req.onerror = () => reject(req.error); }); }
+  function dbClear() { return new Promise((resolve, reject) => { const tx = state.db.transaction(STORE_NAME, "readwrite"); const req = tx.objectStore(STORE_NAME).clear(); req.onsuccess = () => resolve(); req.onerror = () => reject(req.error); }); }
+
+  async function reloadRecords() {
+    const list = await dbGetAll();
+    list.sort((a, b) => {
+      const d = String(b.date || "").localeCompare(String(a.date || ""));
+      if (d !== 0) return d;
+      return Number(b.createdAt || 0) - Number(a.createdAt || 0);
+    });
+    state.records = list;
+    if (!state.selectedId && list.length) state.selectedId = list[0].id;
+    if (state.selectedId && !list.some(r => r.id === state.selectedId)) state.selectedId = list.length ? list[0].id : null;
+  }
+  function loadSettings() {
+    try {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        state.settings.heightCm = saved.heightCm || "";
+        state.settings.durationMs = Number(saved.durationMs || 1000);
+      }
+    } catch (e) {}
+  }
+  function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings)); }
+
+  function openAddModal() { state.pendingFiles = []; els.fileInfo.textContent = "未选择照片"; els.addDate.value = todayInput(); els.addWeight.value = ""; els.addHeight.value = state.settings.heightCm || ""; showModal(els.addModal); }
+  function closeAddModal() { hideModal(els.addModal); state.pendingFiles = []; }
+  async function onFilesSelected() {
+    const files = Array.from(els.fileInput.files || []).filter(f => f.type.startsWith("image/"));
+    state.pendingFiles = files;
+    if (!files.length) { els.fileInfo.textContent = "未选择照片"; return; }
+    els.fileInfo.textContent = "已选择 " + files.length + " 张照片，正在读取日期...";
+    try {
+      const info = await getBestPhotoDate(files[0], todayInput());
+      if (info.date) els.addDate.value = info.date;
+      els.fileInfo.textContent = "已选择 " + files.length + " 张照片，第一张日期来源：" + info.source;
+    } catch (e) { els.fileInfo.textContent = "已选择 " + files.length + " 张照片"; }
+  }
+  async function saveAddRecords() {
+    const files = state.pendingFiles;
+    if (!files.length) { toast("请先选择照片"); return; }
+    const weight = parseFloat(els.addWeight.value);
+    const heightCm = parseFloat(els.addHeight.value);
+    const fallbackDate = els.addDate.value || todayInput();
+    if (!Number.isFinite(weight) || weight <= 0) { toast("请输入正确体重"); return; }
+    if (!Number.isFinite(heightCm) || heightCm <= 0) { toast("请输入正确身高"); return; }
+    state.settings.heightCm = String(Math.round(heightCm)); saveSettings();
+    showProgress("正在添加照片...");
+    let success = 0, failed = 0;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      try {
+        setProgress("正在处理第 " + (i + 1) + " / " + files.length + " 张...");
+        const dateInfo = await getBestPhotoDate(file, fallbackDate);
+        const mainBlob = await compressImage(file, 1800, 0.88);
+        const thumbBlob = await compressImage(file, 700, 0.82);
+        const record = { id: makeId(), date: dateInfo.date, dateSource: dateInfo.source, weight, heightCm, mainBlob, thumbBlob, createdAt: Date.now() + i };
+        await dbPut(record);
+        state.selectedId = record.id;
+        success++;
+      } catch (err) { console.error("添加失败：", file.name, err); failed++; }
+    }
+    hideProgress(); closeAddModal(); await reloadRecords(); render();
+    toast(failed ? "成功 " + success + " 张，失败 " + failed + " 张" : "添加成功");
+  }
+
+  function onTimelineClick(e) {
+    const card = e.target.closest(".record-card");
+    if (card) { state.selectedId = card.dataset.id; render(); }
+  }
+  function openEditModal(id) {
+    const rec = state.records.find(r => r.id === id); if (!rec) return;
+    state.editingId = id;
+    els.editDate.value = rec.date || todayInput();
+    els.editWeight.value = rec.weight || "";
+    els.editHeight.value = rec.heightCm || state.settings.heightCm || "";
+    showModal(els.editModal);
+  }
+  function closeEditModal() { hideModal(els.editModal); state.editingId = null; }
+  async function saveEditRecord() {
+    const rec = state.records.find(r => r.id === state.editingId); if (!rec) return;
+    const weight = parseFloat(els.editWeight.value), heightCm = parseFloat(els.editHeight.value), date = els.editDate.value;
+    if (!date) { toast("请输入日期"); return; }
+    if (!Number.isFinite(weight) || weight <= 0) { toast("请输入正确体重"); return; }
+    if (!Number.isFinite(heightCm) || heightCm <= 0) { toast("请输入正确身高"); return; }
+    rec.date = date; rec.dateSource = "手动编辑日期"; rec.weight = weight; rec.heightCm = heightCm; rec.updatedAt = Date.now();
+    state.settings.heightCm = String(Math.round(heightCm)); saveSettings();
+    await dbPut(rec); closeEditModal(); await reloadRecords(); render(); toast("已保存");
+  }
+  async function deleteRecord(id) {
+    const ok = confirm("确定删除这张照片记录吗？"); if (!ok) return;
+    await dbDelete(id); if (state.selectedId === id) state.selectedId = null;
+    await reloadRecords(); render(); toast("已删除");
+  }
+
+  function openBatchModal() {
+    if (!state.records.length) { toast("还没有照片记录"); return; }
+    renderBatchTable();
+    showModal(els.batchModal);
+    if (state.selectedId) {
+      setTimeout(() => scrollBatchToRecord(state.selectedId, true), 0);
+    }
+  }
+  function closeBatchModal() { hideModal(els.batchModal); revokeBatchUrls(); }
+  function renderBatchTable() {
+    revokeBatchUrls();
+    els.batchTableBody.innerHTML = "";
+    const list = [...state.records].sort((a, b) => {
+      const d = String(b.date || "").localeCompare(String(a.date || ""));
+      if (d !== 0) return d;
+      return Number(b.createdAt || 0) - Number(a.createdAt || 0);
+    });
+    list.forEach(rec => {
+      const url = URL.createObjectURL(rec.thumbBlob || rec.mainBlob);
+      state.batchUrls.push(url);
+      const tr = document.createElement("tr");
+      tr.dataset.id = rec.id;
+      if (rec.id === state.selectedId) tr.classList.add("batch-current");
+      tr.innerHTML = `
+        <td><img class="batch-thumb" src="${url}" alt=""></td>
+        <td><input class="batch-input" type="date" data-field="date" value="${escapeHtml(rec.date || "")}"></td>
+        <td><input class="batch-input" type="number" step="1" data-field="heightCm" value="${escapeHtml(String(rec.heightCm || ""))}"></td>
+        <td><input class="batch-input" type="number" step="0.1" data-field="weight" value="${escapeHtml(String(rec.weight || ""))}"></td>
+        <td><div class="batch-op"><button class="batch-mini-btn batch-img-edit" type="button" data-action="batchImageEdit" data-id="${rec.id}">图片编辑</button><button class="batch-mini-btn batch-replace" type="button" data-action="batchReplaceImage" data-id="${rec.id}">替换图片</button><button class="batch-mini-btn batch-delete" type="button" data-action="batchDelete" data-id="${rec.id}">删除</button></div></td>`;
+      els.batchTableBody.appendChild(tr);
+    });
+  }
+  function scrollBatchToRecord(id, flash) {
+    const row = Array.from(els.batchTableBody.querySelectorAll("tr")).find(tr => tr.dataset.id === id);
+    const wrap = els.batchModal.querySelector(".batch-table-wrap");
+    if (!row || !wrap) return;
+    const targetTop = Math.max(0, row.offsetTop - 72);
+    wrap.scrollTo({ top: targetTop, behavior: "auto" });
+    Array.from(els.batchTableBody.querySelectorAll("tr.batch-current")).forEach(tr => tr.classList.remove("batch-current"));
+    row.classList.add("batch-current");
+    if (flash) {
+      row.classList.add("batch-focus");
+      setTimeout(() => row.classList.remove("batch-focus"), 1500);
+    }
+  }
+  async function saveBatchRecords() {
+    const rows = Array.from(els.batchTableBody.querySelectorAll("tr"));
+    if (!rows.length) { toast("没有可保存的数据"); return; }
+    showProgress("正在保存批量修改...");
+    let saved = 0, failed = 0, lastHeight = "";
+    for (const row of rows) {
+      const id = row.dataset.id;
+      const rec = state.records.find(r => r.id === id);
+      if (!rec) { failed++; continue; }
+      const date = row.querySelector("[data-field='date']").value;
+      const heightCm = parseFloat(row.querySelector("[data-field='heightCm']").value);
+      const weight = parseFloat(row.querySelector("[data-field='weight']").value);
+      if (!date || !Number.isFinite(heightCm) || heightCm <= 0 || !Number.isFinite(weight) || weight <= 0) {
+        failed++; row.style.background = "#fff0f2"; continue;
+      }
+      rec.date = date; rec.heightCm = heightCm; rec.weight = weight; rec.dateSource = "批量编辑日期"; rec.updatedAt = Date.now();
+      lastHeight = String(Math.round(heightCm));
+      try { await dbPut(rec); saved++; row.style.background = ""; } catch (err) { console.error(err); failed++; row.style.background = "#fff0f2"; }
+    }
+    if (lastHeight) { state.settings.heightCm = lastHeight; saveSettings(); }
+    await reloadRecords(); render(); hideProgress();
+    if (failed) toast("已保存 " + saved + " 条，失败 " + failed + " 条");
+    else { toast("批量保存成功"); closeBatchModal(); }
+  }
+  async function onBatchTableClick(e) {
+    const imageEditBtn = e.target.closest("[data-action='batchImageEdit']");
+    const replaceBtn = e.target.closest("[data-action='batchReplaceImage']");
+    const deleteBtn = e.target.closest("[data-action='batchDelete']");
+    if (imageEditBtn) {
+      const id = imageEditBtn.dataset.id;
+      state.selectedId = id;
+      const wrap = els.batchModal.querySelector(".batch-table-wrap");
+      const scrollTop = wrap ? wrap.scrollTop : 0;
+      closeBatchModal();
+      openCropModal(id, { returnToBatch: true, batchScrollTop: scrollTop });
+      return;
+    }
+    if (replaceBtn) {
+      const id = replaceBtn.dataset.id;
+      state.selectedId = id;
+      state.replacingId = id;
+      const wrap = els.batchModal.querySelector(".batch-table-wrap");
+      state.replaceBatchScrollTop = wrap ? wrap.scrollTop : 0;
+      els.replaceInput.value = "";
+      els.replaceInput.click();
+      return;
+    }
+    if (deleteBtn) {
+      const id = deleteBtn.dataset.id;
+      const ok = confirm("确定删除这张照片记录吗？"); if (!ok) return;
+      await dbDelete(id); if (state.selectedId === id) state.selectedId = null;
+      await reloadRecords(); render(); renderBatchTable(); toast("已删除");
+    }
+  }
+
+  async function replaceRecordImageFromInput() {
+    const file = els.replaceInput.files && els.replaceInput.files[0];
+    const id = state.replacingId;
+    state.replacingId = null;
+    els.replaceInput.value = "";
+    if (!file || !id) return;
+    if (!file.type || !file.type.startsWith("image/")) {
+      toast("请选择图片文件");
+      return;
+    }
+
+    const rec = state.records.find(r => r.id === id);
+    if (!rec) {
+      toast("没有找到这条记录");
+      return;
+    }
+
+    try {
+      showProgress("正在替换图片...");
+      rec.mainBlob = await compressImage(file, 1800, 0.88);
+      rec.thumbBlob = await compressImage(file, 700, 0.82);
+      rec.updatedAt = Date.now();
+      await dbPut(rec);
+      state.selectedId = rec.id;
+
+      render();
+
+      const row = Array.from(els.batchTableBody.querySelectorAll("tr")).find(tr => tr.dataset.id === rec.id);
+      if (row) {
+        const img = row.querySelector(".batch-thumb");
+        if (img) {
+          const url = URL.createObjectURL(rec.thumbBlob || rec.mainBlob);
+          state.batchUrls.push(url);
+          img.src = url;
+        }
+        row.classList.add("batch-current", "batch-focus");
+        setTimeout(() => row.classList.remove("batch-focus"), 1500);
+      }
+      const wrap = els.batchModal.querySelector(".batch-table-wrap");
+      if (wrap) wrap.scrollTop = state.replaceBatchScrollTop || 0;
+      state.replaceBatchScrollTop = 0;
+
+      hideProgress();
+      toast("图片已替换，日期、体重、身高不变");
+    } catch (err) {
+      console.error(err);
+      hideProgress();
+      alert("替换图片失败：" + err.message);
+    }
+  }
+
+
+  async function openCropModal(id, options = {}) {
+    const rec = state.records.find(r => r.id === id); if (!rec) return;
+    try {
+      showProgress("正在打开图片编辑...");
+      const img = await loadImageFromBlob(rec.mainBlob);
+      Object.assign(state.crop, {
+        id,
+        img,
+        aspect: "free",
+        scale: 1,
+        minScale: 1,
+        offsetX: 0,
+        offsetY: 0,
+        dragging: false,
+        resizing: false,
+        resizeHandle: null,
+        startRect: null,
+        returnToBatch: !!options.returnToBatch,
+        batchScrollTop: Number(options.batchScrollTop || 0)
+      });
+      els.cropZoom.value = "100";
+      Array.from(els.cropAspectBtns.querySelectorAll("button")).forEach(btn => btn.classList.toggle("active", btn.dataset.aspect === "free"));
+      hideProgress(); showModal(els.cropModal);
+      setTimeout(() => setCropAspect("free"), 60);
+    } catch (err) { hideProgress(); console.error(err); alert("图片编辑打开失败：" + err.message); }
+  }
+  function closeCropModal(restoreBatch = true) {
+    const shouldReturnToBatch = state.crop.returnToBatch && restoreBatch !== false;
+    const batchScrollTop = Number(state.crop.batchScrollTop || 0);
+    hideModal(els.cropModal);
+    Object.assign(state.crop, {
+      id: null,
+      img: null,
+      dragging: false,
+      resizing: false,
+      resizeHandle: null,
+      startRect: null,
+      returnToBatch: false,
+      batchScrollTop: 0
+    });
+    if (shouldReturnToBatch) restoreBatchModal(batchScrollTop);
+  }
+  function restoreBatchModal(scrollTop) {
+    if (!state.records.length) return;
+    renderBatchTable();
+    showModal(els.batchModal);
+    setTimeout(() => {
+      const wrap = els.batchModal.querySelector(".batch-table-wrap");
+      if (wrap) wrap.scrollTop = scrollTop || 0;
+    }, 0);
+  }
+  function setCropAspect(aspect) {
+    const crop = state.crop, canvas = els.cropCanvas, img = crop.img; if (!img) return;
+    crop.aspect = aspect;
+    const cw = canvas.width, ch = canvas.height, maxW = cw * 0.82, maxH = ch * 0.82;
+    let ratio = aspect === "free" ? 1 : aspect === "original" ? (img.naturalWidth || img.width) / (img.naturalHeight || img.height) : Number(aspect);
+    let w = maxW, h = w / ratio;
+    if (h > maxH) { h = maxH; w = h * ratio; }
+    crop.cropRect = { x: (cw - w) / 2, y: (ch - h) / 2, w, h };
+    resetCropImagePosition(); drawCropCanvas();
+  }
+  function resetCropImagePosition() {
+    const crop = state.crop, img = crop.img; if (!img) return;
+    const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, rect = crop.cropRect;
+    crop.minScale = Math.max(rect.w / iw, rect.h / ih);
+    crop.scale = crop.minScale * (Number(els.cropZoom.value) / 100);
+    crop.offsetX = rect.x + rect.w / 2 - (iw * crop.scale) / 2;
+    crop.offsetY = rect.y + rect.h / 2 - (ih * crop.scale) / 2;
+    clampCropOffset();
+  }
+  function onCropZoom() {
+    const crop = state.crop, img = crop.img; if (!img) return;
+    const oldScale = crop.scale, newScale = crop.minScale * (Number(els.cropZoom.value) / 100), rect = crop.cropRect;
+    const centerX = rect.x + rect.w / 2, centerY = rect.y + rect.h / 2;
+    const imgCenterX = (centerX - crop.offsetX) / oldScale, imgCenterY = (centerY - crop.offsetY) / oldScale;
+    crop.scale = newScale; crop.offsetX = centerX - imgCenterX * newScale; crop.offsetY = centerY - imgCenterY * newScale;
+    clampCropOffset(); drawCropCanvas();
+  }
+  function cropPointerDown(e) {
+    if (!state.crop.img) return;
+    const p = getCropCanvasPoint(e), handle = getCropHandle(p.x, p.y);
+    state.crop.resizeHandle = handle;
+    if (handle && handle !== "move") { state.crop.resizing = true; state.crop.dragging = false; state.crop.startX = p.x; state.crop.startY = p.y; state.crop.startRect = { ...state.crop.cropRect }; }
+    else if (handle === "move") { state.crop.dragging = true; state.crop.resizing = false; state.crop.lastX = p.x; state.crop.lastY = p.y; }
+    else { state.crop.dragging = false; state.crop.resizing = false; }
+    els.cropCanvas.setPointerCapture(e.pointerId);
+  }
+  function cropPointerMove(e) {
+    const crop = state.crop; if (!crop.img) return;
+    const p = getCropCanvasPoint(e);
+    if (crop.resizing && crop.resizeHandle) { resizeCropRect(p.x, p.y); return; }
+    if (crop.dragging) { const dx = p.x - crop.lastX, dy = p.y - crop.lastY; crop.offsetX += dx; crop.offsetY += dy; crop.lastX = p.x; crop.lastY = p.y; clampCropOffset(); drawCropCanvas(); return; }
+    updateCropCursor(getCropHandle(p.x, p.y));
+  }
+  function cropPointerUp(e) { state.crop.dragging = false; state.crop.resizing = false; state.crop.resizeHandle = null; state.crop.startRect = null; try { els.cropCanvas.releasePointerCapture(e.pointerId); } catch (err) {} updateCropCursor(null); }
+  function getCropCanvasPoint(e) { const box = els.cropCanvas.getBoundingClientRect(); return { x: (e.clientX - box.left) * (els.cropCanvas.width / box.width), y: (e.clientY - box.top) * (els.cropCanvas.height / box.height) }; }
+  function getCropHandle(x, y) {
+    const rect = state.crop.cropRect, gap = 18;
+    const left = Math.abs(x - rect.x) <= gap, right = Math.abs(x - (rect.x + rect.w)) <= gap, top = Math.abs(y - rect.y) <= gap, bottom = Math.abs(y - (rect.y + rect.h)) <= gap;
+    const inX = x >= rect.x - gap && x <= rect.x + rect.w + gap, inY = y >= rect.y - gap && y <= rect.y + rect.h + gap;
+    if (left && top) return "nw"; if (right && top) return "ne"; if (left && bottom) return "sw"; if (right && bottom) return "se";
+    if (top && inX) return "n"; if (bottom && inX) return "s"; if (left && inY) return "w"; if (right && inY) return "e";
+    if (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h) return "move";
+    return null;
+  }
+  function updateCropCursor(handle) { const map = { n: "ns-resize", s: "ns-resize", e: "ew-resize", w: "ew-resize", nw: "nwse-resize", se: "nwse-resize", ne: "nesw-resize", sw: "nesw-resize", move: "grab" }; els.cropCanvas.style.cursor = map[handle] || "default"; }
+  function resizeCropRect(x, y) {
+    const crop = state.crop, start = crop.startRect, handle = crop.resizeHandle; if (!start || !handle) return;
+    const canvas = els.cropCanvas, pad = 20, minSize = 80;
+    let nx = start.x, ny = start.y, nw = start.w, nh = start.h;
+    const dx = x - crop.startX, dy = y - crop.startY;
+    if (handle.includes("e")) nw = start.w + dx;
+    if (handle.includes("s")) nh = start.h + dy;
+    if (handle.includes("w")) { nx = start.x + dx; nw = start.w - dx; }
+    if (handle.includes("n")) { ny = start.y + dy; nh = start.h - dy; }
+    if (nw < minSize) { if (handle.includes("w")) nx = start.x + start.w - minSize; nw = minSize; }
+    if (nh < minSize) { if (handle.includes("n")) ny = start.y + start.h - minSize; nh = minSize; }
+    if (nx < pad) { if (handle.includes("w")) nw -= pad - nx; nx = pad; }
+    if (ny < pad) { if (handle.includes("n")) nh -= pad - ny; ny = pad; }
+    if (nx + nw > canvas.width - pad) nw = canvas.width - pad - nx;
+    if (ny + nh > canvas.height - pad) nh = canvas.height - pad - ny;
+    crop.cropRect = { x: nx, y: ny, w: Math.max(minSize, nw), h: Math.max(minSize, nh) };
+    updateCropMinScaleAfterResize(); clampCropOffset(); drawCropCanvas();
+  }
+  function updateCropMinScaleAfterResize() {
+    const crop = state.crop, img = crop.img; if (!img) return;
+    const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, rect = crop.cropRect;
+    crop.minScale = Math.max(rect.w / iw, rect.h / ih);
+    const neededScale = crop.minScale * (Number(els.cropZoom.value) / 100);
+    if (crop.scale < neededScale) crop.scale = neededScale;
+  }
+  function clampCropOffset() {
+    const crop = state.crop, img = crop.img; if (!img) return;
+    const iw = (img.naturalWidth || img.width) * crop.scale, ih = (img.naturalHeight || img.height) * crop.scale, rect = crop.cropRect;
+    const minX = rect.x + rect.w - iw, maxX = rect.x, minY = rect.y + rect.h - ih, maxY = rect.y;
+    crop.offsetX = iw <= rect.w ? rect.x + (rect.w - iw) / 2 : Math.min(maxX, Math.max(minX, crop.offsetX));
+    crop.offsetY = ih <= rect.h ? rect.y + (rect.h - ih) / 2 : Math.min(maxY, Math.max(minY, crop.offsetY));
+  }
+  function drawCropCanvas() {
+    const crop = state.crop, canvas = els.cropCanvas, ctx = canvas.getContext("2d"), img = crop.img;
+    ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = "#181818"; ctx.fillRect(0, 0, canvas.width, canvas.height); if (!img) return;
+    const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+    ctx.drawImage(img, crop.offsetX, crop.offsetY, iw * crop.scale, ih * crop.scale);
+    const rect = crop.cropRect;
+    ctx.save(); ctx.fillStyle = "rgba(0,0,0,.58)"; ctx.beginPath(); ctx.rect(0, 0, canvas.width, canvas.height); ctx.rect(rect.x, rect.y, rect.w, rect.h); ctx.fill("evenodd");
+    ctx.strokeStyle = "#35c76f"; ctx.lineWidth = 4; ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.strokeStyle = "rgba(255,255,255,.65)"; ctx.lineWidth = 1.5; ctx.beginPath();
+    ctx.moveTo(rect.x + rect.w / 3, rect.y); ctx.lineTo(rect.x + rect.w / 3, rect.y + rect.h);
+    ctx.moveTo(rect.x + rect.w * 2 / 3, rect.y); ctx.lineTo(rect.x + rect.w * 2 / 3, rect.y + rect.h);
+    ctx.moveTo(rect.x, rect.y + rect.h / 3); ctx.lineTo(rect.x + rect.w, rect.y + rect.h / 3);
+    ctx.moveTo(rect.x, rect.y + rect.h * 2 / 3); ctx.lineTo(rect.x + rect.w, rect.y + rect.h * 2 / 3); ctx.stroke(); drawCropHandles(ctx, rect); ctx.restore();
+  }
+  function drawCropHandles(ctx, rect) {
+    const points = [[rect.x, rect.y], [rect.x + rect.w / 2, rect.y], [rect.x + rect.w, rect.y], [rect.x, rect.y + rect.h / 2], [rect.x + rect.w, rect.y + rect.h / 2], [rect.x, rect.y + rect.h], [rect.x + rect.w / 2, rect.y + rect.h], [rect.x + rect.w, rect.y + rect.h]];
+    ctx.save(); for (const [x, y] of points) { ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = "#35c76f"; ctx.stroke(); } ctx.restore();
+  }
+  async function saveCropImage() {
+    const crop = state.crop, rec = state.records.find(r => r.id === crop.id);
+    if (!rec || !crop.img) { toast("没有可保存的图片"); return; }
+    try {
+      showProgress("正在保存裁切图片...");
+      rec.mainBlob = await makeCroppedBlob(1800, 0.9);
+      rec.thumbBlob = await makeCroppedBlob(700, 0.82);
+      rec.updatedAt = Date.now();
+      const shouldReturnToBatch = state.crop.returnToBatch;
+      const batchScrollTop = Number(state.crop.batchScrollTop || 0);
+      await dbPut(rec);
+      closeCropModal(false);
+      hideProgress();
+      await reloadRecords();
+      render();
+      if (shouldReturnToBatch) restoreBatchModal(batchScrollTop);
+      toast("图片已裁切");
+    } catch (err) { hideProgress(); console.error(err); alert("保存裁切失败：" + err.message); }
+  }
+  function makeCroppedBlob(maxSide, quality) {
+    return new Promise((resolve, reject) => {
+      const crop = state.crop, img = crop.img, rect = crop.cropRect;
+      const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+      let sx = (rect.x - crop.offsetX) / crop.scale, sy = (rect.y - crop.offsetY) / crop.scale, sw = rect.w / crop.scale, sh = rect.h / crop.scale;
+      sx = Math.max(0, Math.min(iw, sx)); sy = Math.max(0, Math.min(ih, sy)); sw = Math.max(1, Math.min(iw - sx, sw)); sh = Math.max(1, Math.min(ih - sy, sh));
+      const scale = Math.min(1, maxSide / Math.max(sw, sh));
+      const canvas = document.createElement("canvas"); canvas.width = Math.round(sw * scale); canvas.height = Math.round(sh * scale);
+      canvas.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("裁切图片生成失败")), "image/jpeg", quality);
+    });
+  }
+
+  function render() { renderTimeline(); renderPreview(); }
+  function renderTimeline() {
+    revokeListUrls(); els.timeline.innerHTML = "";
+    if (!state.records.length) { els.emptyBox.style.display = "flex"; return; }
+    els.emptyBox.style.display = "none";
+    const groups = groupByMonth(state.records);
+    Object.keys(groups).forEach(month => {
+      const title = document.createElement("div"); title.className = "month-title"; title.textContent = month; els.timeline.appendChild(title);
+      const grid = document.createElement("div"); grid.className = "record-grid";
+      groups[month].forEach(rec => {
+        const url = URL.createObjectURL(rec.thumbBlob || rec.mainBlob); state.urls.push(url);
+        const card = document.createElement("div"); card.className = "record-card" + (rec.id === state.selectedId ? " active" : ""); card.dataset.id = rec.id;
+        card.innerHTML = `<div class="thumb-box"><img src="${url}" alt=""><div class="day-mark">${getDay(rec.date)}</div></div><div class="card-info">体重: <b>${fmtWeight(rec.weight)}kg</b><br>身高: <b>${fmtHeight(rec.heightCm)}</b><br>BMI: <b>${calcBMI(rec.weight, rec.heightCm)}</b></div>`;
+        grid.appendChild(card);
+      });
+      els.timeline.appendChild(grid);
+    });
+  }
+  function renderPreview() {
+    const rec = getSelectedRecord();
+    if (state.previewUrl) { URL.revokeObjectURL(state.previewUrl); state.previewUrl = null; }
+    if (!rec) { els.previewFrame.classList.add("empty"); els.previewEmpty.style.display = "block"; els.previewImg.style.display = "none"; els.dateBadge.style.display = "none"; els.infoBadges.style.display = "none"; return; }
+    state.previewUrl = URL.createObjectURL(rec.mainBlob);
+    els.previewFrame.classList.remove("empty"); els.previewEmpty.style.display = "none"; els.previewImg.src = state.previewUrl; els.previewImg.style.display = "block";
+    els.dateBadge.textContent = formatChineseDate(rec.date); els.dateBadge.style.display = "block";
+    els.weightBadge.textContent = "体重:" + fmtWeight(rec.weight) + "kg"; els.heightBadge.textContent = "身高:" + fmtHeight(rec.heightCm); els.bmiBadge.textContent = "BMI:" + calcBMI(rec.weight, rec.heightCm); els.infoBadges.style.display = "flex";
+  }
+  async function exportCurrentImage() {
+    const rec = getSelectedRecord(); if (!rec) { toast("请先添加照片"); return; }
+    showProgress("正在导出图片...");
+    try {
+      const canvas = document.createElement("canvas"); canvas.width = 1080; canvas.height = 1920;
+      const ctx = canvas.getContext("2d"), img = await loadImageFromBlob(rec.mainBlob);
+      drawRecordFrame(ctx, canvas.width, canvas.height, img, rec);
+      downloadBlob(await canvasToBlob(canvas, "image/jpeg", 0.92), "形迹_" + rec.date + ".jpg");
+      hideProgress(); toast("图片已导出");
+    } catch (err) { console.error(err); hideProgress(); alert("导出图片失败：" + err.message); }
+  }
+  async function exportVideo() {
+    if (!state.records.length) { toast("请先添加照片"); return; }
+    if (!HTMLCanvasElement.prototype.captureStream || !window.MediaRecorder) { alert("当前浏览器不支持直接导出视频。请使用最新版 Edge 或 Chrome。"); return; }
+    showProgress("正在准备视频...");
+    try {
+      const list = [...state.records].sort((a, b) => { const d = String(a.date || "").localeCompare(String(b.date || "")); if (d !== 0) return d; return Number(a.createdAt || 0) - Number(b.createdAt || 0); });
+      const canvas = document.createElement("canvas"); canvas.width = 1080; canvas.height = 1920; const ctx = canvas.getContext("2d");
+      const prepared = [];
+      for (let i = 0; i < list.length; i++) { setProgress("正在加载第 " + (i + 1) + " / " + list.length + " 张..."); prepared.push({ record: list[i], img: await loadImageFromBlob(list[i].mainBlob) }); }
+      const stream = canvas.captureStream(30), mimeType = getBestVideoMimeType();
+      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8500000 });
+      const chunks = [];
+      recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+      const stopped = new Promise(resolve => { recorder.onstop = resolve; });
+      recorder.start(100);
+      const duration = Number(state.settings.durationMs || 1000);
+      for (let i = 0; i < prepared.length; i++) { setProgress("正在录制第 " + (i + 1) + " / " + prepared.length + " 张..."); await drawForDuration(ctx, canvas.width, canvas.height, prepared[i], duration); }
+      await drawForDuration(ctx, canvas.width, canvas.height, prepared[prepared.length - 1], 500);
+      recorder.stop(); await stopped; stream.getTracks().forEach(track => track.stop());
+      downloadBlob(new Blob(chunks, { type: mimeType || "video/webm" }), "形迹视频.webm");
+      hideProgress(); toast("视频已导出");
+    } catch (err) { console.error(err); hideProgress(); alert("导出视频失败：" + err.message); }
+  }
+  function drawForDuration(ctx, w, h, item, duration) { return new Promise(resolve => { const start = performance.now(); function step(now) { drawRecordFrame(ctx, w, h, item.img, item.record); if (now - start < duration) requestAnimationFrame(step); else resolve(); } requestAnimationFrame(step); }); }
+  function drawRecordFrame(ctx, w, h, img, rec) {
+    ctx.save();
+    ctx.fillStyle = "#151515";
+    ctx.fillRect(0, 0, w, h);
+    drawImageContain(ctx, img, 0, 0, w, h);
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, h);
+    gradient.addColorStop(0, "rgba(0,0,0,.28)");
+    gradient.addColorStop(0.32, "rgba(0,0,0,0)");
+    gradient.addColorStop(0.68, "rgba(0,0,0,0)");
+    gradient.addColorStop(1, "rgba(0,0,0,.38)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, w, h);
+
+    drawGlassBadge(ctx, {
+      text: formatChineseDate(rec.date),
+      cx: w / 2,
+      cy: 116,
+      fontSize: 54,
+      height: 88,
+      paddingX: 44,
+      radius: 24,
+      fill: "rgba(8,12,20,.64)",
+      border: "rgba(255,255,255,.10)",
+      shadow: "rgba(0,0,0,.14)"
+    });
+
+    drawBottomBadges(ctx, w, h, [
+      "体重:" + fmtWeight(rec.weight) + "kg",
+      "身高:" + fmtHeight(rec.heightCm),
+      "BMI:" + calcBMI(rec.weight, rec.heightCm)
+    ]);
+    ctx.restore();
+  }
+  function drawBottomBadges(ctx, w, h, labels) {
+    const margin = 70;
+    let gap = 28;
+    let fontSize = 40;
+    let paddingX = 27;
+    let badgeH = 72;
+    let widths = [];
+
+    function measureWidths() {
+      ctx.save();
+      ctx.font = "950 " + fontSize + "px Arial, Microsoft YaHei, PingFang SC, sans-serif";
+      const measured = labels.map(text => Math.ceil(ctx.measureText(String(text)).width + paddingX * 2));
+      ctx.restore();
+      return measured;
+    }
+
+    widths = measureWidths();
+    let totalW = widths.reduce((sum, n) => sum + n, 0) + gap * (labels.length - 1);
+    const maxW = w - margin * 2;
+
+    while (totalW > maxW && fontSize > 31) {
+      fontSize -= 2;
+      paddingX = Math.max(20, paddingX - 1.5);
+      gap = Math.max(18, gap - 2);
+      badgeH = Math.max(62, Math.round(fontSize * 1.78));
+      widths = measureWidths();
+      totalW = widths.reduce((sum, n) => sum + n, 0) + gap * (labels.length - 1);
+    }
+
+    const cy = h - 148;
+    let x = (w - totalW) / 2;
+    for (let i = 0; i < labels.length; i++) {
+      const badgeW = widths[i];
+      drawGlassBadge(ctx, {
+        text: labels[i],
+        cx: x + badgeW / 2,
+        cy,
+        width: badgeW,
+        height: badgeH,
+        fontSize,
+        paddingX,
+        radius: Math.round(badgeH * .28),
+        fill: "rgba(8,12,20,.60)",
+        border: "rgba(255,255,255,.09)",
+        shadow: "rgba(0,0,0,.13)"
+      });
+      x += badgeW + gap;
+    }
+  }
+  function drawGlassBadge(ctx, opts) {
+    const text = String(opts.text || "");
+    const fontSize = Number(opts.fontSize || 40);
+    const height = Number(opts.height || fontSize * 1.9);
+    const paddingX = Number(opts.paddingX || fontSize * .72);
+    ctx.save();
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+    ctx.font = "950 " + fontSize + "px Arial, Microsoft YaHei, PingFang SC, sans-serif";
+    const measuredW = ctx.measureText(text).width;
+    const width = Number(opts.width || (measuredW + paddingX * 2));
+    const x = opts.cx - width / 2;
+    const y = opts.cy - height / 2;
+    const radius = Math.min(Number(opts.radius || 18), height / 2);
+
+    ctx.shadowColor = opts.shadow || "rgba(0,0,0,.14)";
+    ctx.shadowBlur = 18;
+    ctx.shadowOffsetY = 8;
+    ctx.fillStyle = opts.fill || "rgba(8,12,20,.62)";
+    roundRect(ctx, x, y, width, height, radius);
+    ctx.fill();
+
+    ctx.shadowColor = "transparent";
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = opts.border || "rgba(255,255,255,.10)";
+    roundRect(ctx, x + .75, y + .75, width - 1.5, height - 1.5, Math.max(0, radius - .75));
+    ctx.stroke();
+
+    const maxTextW = width - Math.max(20, paddingX * 1.1);
+    let finalFont = fontSize;
+    if (measuredW > maxTextW) finalFont = Math.max(26, fontSize * (maxTextW / measuredW));
+    ctx.font = "950 " + finalFont + "px Arial, Microsoft YaHei, PingFang SC, sans-serif";
+    ctx.fillStyle = "#fff";
+    ctx.fillText(text, opts.cx, opts.cy + 2);
+    ctx.restore();
+  }
+  function drawImageCover(ctx, img, x, y, w, h) { const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, scale = Math.max(w / iw, h / ih), nw = iw * scale, nh = ih * scale; ctx.drawImage(img, x + (w - nw) / 2, y + (h - nh) / 2, nw, nh); }
+  function drawImageContain(ctx, img, x, y, w, h) { const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, scale = Math.min(w / iw, h / ih), nw = iw * scale, nh = ih * scale; ctx.drawImage(img, x + (w - nw) / 2, y + (h - nh) / 2, nw, nh); }
+  function drawRoundLabel(ctx, text, cx, cy, fontSize, bold) { drawGlassBadge(ctx, { text, cx, cy, fontSize, height: fontSize * 1.9, paddingX: fontSize * .75, radius: Math.round(fontSize * .42) }); }
+  function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r); ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r); ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath(); }
+
+  async function getBestPhotoDate(file, fallbackDate) {
+    try { const exifDate = await readPhotoDate(file); if (exifDate) return { date: exifDate, source: "EXIF拍摄日期" }; } catch (e) {}
+    try { const xmpDate = await readXmpDate(file); if (xmpDate) return { date: xmpDate, source: "XMP拍摄日期" }; } catch (e) {}
+    if (file.lastModified && Number.isFinite(file.lastModified)) { const modifiedDate = dateToInputValue(new Date(file.lastModified)); if (modifiedDate) return { date: modifiedDate, source: "文件最后修改时间" }; }
+    return { date: fallbackDate || todayInput(), source: "手动填写日期" };
+  }
+  async function readPhotoDate(file) { try { const buffer = await file.slice(0, Math.min(file.size, 6 * 1024 * 1024)).arrayBuffer(); return parseExifDate(buffer); } catch (e) { return null; } }
+  function parseExifDate(buffer) {
+    const view = new DataView(buffer); if (view.byteLength < 4 || view.getUint16(0, false) !== 0xFFD8) return null;
+    let offset = 2;
+    while (offset + 4 < view.byteLength) {
+      if (view.getUint8(offset) !== 0xFF) break;
+      const marker = view.getUint8(offset + 1), size = view.getUint16(offset + 2, false);
+      if (marker === 0xE1 && getAscii(view, offset + 4, 6) === "Exif\u0000\u0000") return readTiffDate(view, offset + 10);
+      if (size < 2) break; offset += 2 + size;
+    }
+    return null;
+  }
+  function readTiffDate(view, tiffStart) {
+    if (tiffStart + 8 >= view.byteLength) return null;
+    const endian = getAscii(view, tiffStart, 2), little = endian === "II";
+    if (!little && endian !== "MM") return null;
+    if (view.getUint16(tiffStart + 2, little) !== 42) return null;
+    const ifd0 = readIFD(view, tiffStart, view.getUint32(tiffStart + 4, little), little);
+    let dateText = ifd0[0x0132] || "";
+    const exifOffset = ifd0[0x8769];
+    if (typeof exifOffset === "number") { const exifIFD = readIFD(view, tiffStart, exifOffset, little); dateText = exifIFD[0x9003] || exifIFD[0x9004] || dateText; }
+    return normalizeAnyDate(dateText);
+  }
+  function readIFD(view, tiffStart, ifdOffset, little) {
+    const result = {}, start = tiffStart + ifdOffset; if (start + 2 >= view.byteLength) return result;
+    const entries = view.getUint16(start, little);
+    for (let i = 0; i < entries; i++) {
+      const entry = start + 2 + i * 12; if (entry + 12 > view.byteLength) break;
+      const tag = view.getUint16(entry, little), type = view.getUint16(entry + 2, little), count = view.getUint32(entry + 4, little), valueOffset = entry + 8;
+      if (type === 2) { const strOffset = count <= 4 ? valueOffset : tiffStart + view.getUint32(valueOffset, little); result[tag] = getNullTerminatedString(view, strOffset, Math.max(0, count)).trim(); }
+      else if (type === 4) result[tag] = view.getUint32(valueOffset, little);
+      else if (type === 3) result[tag] = view.getUint16(valueOffset, little);
+    }
+    return result;
+  }
+  async function readXmpDate(file) {
+    const buffer = await file.slice(0, Math.min(file.size, 6 * 1024 * 1024)).arrayBuffer();
+    let text = ""; try { text = new TextDecoder("utf-8", { fatal: false }).decode(buffer); } catch (e) {}
+    if (!text) return null;
+    const patterns = [/DateTimeOriginal=["']([^"']+)["']/i, /exif:DateTimeOriginal=["']([^"']+)["']/i, /xmp:CreateDate=["']([^"']+)["']/i, /photoshop:DateCreated=["']([^"']+)["']/i, /CreateDate=["']([^"']+)["']/i, /DateCreated=["']([^"']+)["']/i, /<exif:DateTimeOriginal>([^<]+)<\/exif:DateTimeOriginal>/i, /<xmp:CreateDate>([^<]+)<\/xmp:CreateDate>/i, /<photoshop:DateCreated>([^<]+)<\/photoshop:DateCreated>/i];
+    for (const reg of patterns) { const match = text.match(reg); if (match && match[1]) { const d = normalizeAnyDate(match[1]); if (d) return d; } }
+    return null;
+  }
+  function getAscii(view, start, length) { let out = ""; for (let i = 0; i < length; i++) { const pos = start + i; if (pos >= view.byteLength) break; out += String.fromCharCode(view.getUint8(pos)); } return out; }
+  function getNullTerminatedString(view, start, length) { let out = ""; for (let i = 0; i < length; i++) { const pos = start + i; if (pos >= view.byteLength) break; const code = view.getUint8(pos); if (code === 0) break; out += String.fromCharCode(code); } return out; }
+  function normalizeAnyDate(value) { if (!value) return null; const text = String(value).trim(); const m = text.match(/(\d{4})[:\/\-](\d{1,2})[:\/\-](\d{1,2})/); if (m) return m[1] + "-" + String(m[2]).padStart(2, "0") + "-" + String(m[3]).padStart(2, "0"); const d = new Date(text); if (!Number.isNaN(d.getTime())) return dateToInputValue(d); return null; }
+  function dateToInputValue(date) { if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null; return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0"); }
+
+  async function compressImage(file, maxSide, quality) {
+    const img = await loadImageFromBlob(file), iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, scale = Math.min(1, maxSide / Math.max(iw, ih));
+    const canvas = document.createElement("canvas"); canvas.width = Math.max(1, Math.round(iw * scale)); canvas.height = Math.max(1, Math.round(ih * scale));
+    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+    return await canvasToBlob(canvas, "image/jpeg", quality);
+  }
+  function loadImageFromBlob(blob) { return new Promise((resolve, reject) => { const url = URL.createObjectURL(blob), img = new Image(); img.onload = () => { URL.revokeObjectURL(url); resolve(img); }; img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("图片加载失败")); }; img.src = url; }); }
+  function canvasToBlob(canvas, type, quality) { return new Promise((resolve, reject) => { canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Canvas导出失败")), type, quality); }); }
+  function getBestVideoMimeType() { for (const type of ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"]) { if (MediaRecorder.isTypeSupported(type)) return type; } return ""; }
+  function downloadBlob(blob, filename) { const url = URL.createObjectURL(blob), a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000); }
+  function groupByMonth(list) { const groups = {}; list.forEach(rec => { const key = monthKey(rec.date); if (!groups[key]) groups[key] = []; groups[key].push(rec); }); return groups; }
+  function monthKey(date) { return (!date || date.length < 7) ? "未知日期" : date.slice(0, 7).replace("-", "."); }
+  function getDay(date) { return (!date || date.length < 10) ? "" : String(parseInt(date.slice(8, 10), 10)); }
+  function formatChineseDate(date) { return (!date || date.length < 10) ? "未知日期" : date.slice(0, 4) + "年" + date.slice(5, 7) + "月" + date.slice(8, 10) + "日"; }
+  function fmtWeight(weight) { const n = Number(weight); if (!Number.isFinite(n)) return "--"; return Math.round(n) === n ? String(Math.round(n)) : n.toFixed(1); }
+  function fmtHeight(heightCm) { const n = Number(heightCm); return (!Number.isFinite(n) || n <= 0) ? "--" : (n / 100).toFixed(2) + "m"; }
+  function calcBMI(weight, heightCm) { const w = Number(weight), h = Number(heightCm) / 100; return (!Number.isFinite(w) || !Number.isFinite(h) || h <= 0) ? "--" : (w / (h * h)).toFixed(1); }
+  function getSelectedRecord() { if (!state.records.length) return null; let rec = state.records.find(r => r.id === state.selectedId); if (!rec) { rec = state.records[0]; state.selectedId = rec.id; } return rec; }
+  function makeId() { return window.crypto && crypto.randomUUID ? crypto.randomUUID() : "id_" + Date.now() + "_" + Math.random().toString(16).slice(2); }
+  function todayInput() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+
+
+  async function exportAllImagesZip() {
+    if (!state.records.length) {
+      toast("还没有可导出的图片");
+      return;
+    }
+
+    try {
+      showProgress("正在准备全部图片...");
+      const list = [...state.records].sort((a, b) => {
+        const d = String(a.date || "").localeCompare(String(b.date || ""));
+        if (d !== 0) return d;
+        return Number(a.createdAt || 0) - Number(b.createdAt || 0);
+      });
+
+      const usedNames = {};
+      const files = [];
+      const canvas = document.createElement("canvas");
+      canvas.width = 1080;
+      canvas.height = 1920;
+      const ctx = canvas.getContext("2d");
+
+      for (let i = 0; i < list.length; i++) {
+        const rec = list[i];
+        if (!rec.mainBlob) continue;
+        setProgress("正在生成第 " + (i + 1) + " / " + list.length + " 张成片...");
+
+        const img = await loadImageFromBlob(rec.mainBlob);
+        drawRecordFrame(ctx, canvas.width, canvas.height, img, rec);
+        const processedBlob = await canvasToBlob(canvas, "image/jpeg", 0.92);
+        const baseName = buildRecordImageName(rec);
+
+        files.push({
+          name: makeUniqueZipName(baseName + ".jpg", usedNames),
+          blob: processedBlob,
+          modified: dateFromRecord(rec)
+        });
+      }
+
+      if (!files.length) throw new Error("没有找到可导出的图片");
+      const zipBlob = await makeStoredZip(files);
+      downloadBlob(zipBlob, "形迹全部成片_" + todayInput() + ".zip");
+      hideProgress();
+      toast("全部成片已导出");
+    } catch (err) {
+      console.error(err);
+      hideProgress();
+      alert("导出全部图片失败：" + err.message);
+    }
+  }
+
+  function buildRecordImageName(rec) {
+    const dateText = formatChineseDate(rec.date);
+    const weightText = fmtWeight(rec.weight);
+    const bmiText = calcBMI(rec.weight, rec.heightCm);
+    return sanitizeFileName(dateText + "_" + weightText + "KG_" + bmiText);
+  }
+
+  function imageExtension(mime) {
+    const type = String(mime || "").toLowerCase();
+    if (type.includes("png")) return ".png";
+    if (type.includes("webp")) return ".webp";
+    return ".jpg";
+  }
+
+  function sanitizeFileName(name) {
+    return String(name || "未命名")
+      .replace(/[\\/:*?"<>|]/g, "_")
+      .replace(/\s+/g, " ")
+      .trim() || "未命名";
+  }
+
+  function makeUniqueZipName(name, used) {
+    const dot = name.lastIndexOf(".");
+    const base = dot > 0 ? name.slice(0, dot) : name;
+    const ext = dot > 0 ? name.slice(dot) : "";
+    let finalName = name;
+    let index = 2;
+    while (used[finalName]) {
+      finalName = base + "_" + index + ext;
+      index++;
+    }
+    used[finalName] = true;
+    return finalName;
+  }
+
+  function dateFromRecord(rec) {
+    if (rec && rec.date) {
+      const d = new Date(rec.date + "T00:00:00");
+      if (!Number.isNaN(d.getTime())) return d;
+    }
+    const fallback = new Date(Number(rec && rec.createdAt || Date.now()));
+    return Number.isNaN(fallback.getTime()) ? new Date() : fallback;
+  }
+
+  const ZIP_CRC_TABLE = (() => {
+    const table = new Uint32Array(256);
+    for (let i = 0; i < 256; i++) {
+      let c = i;
+      for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      table[i] = c >>> 0;
+    }
+    return table;
+  })();
+
+  function crc32(bytes) {
+    let crc = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i++) crc = ZIP_CRC_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  async function makeStoredZip(files) {
+    const encoder = new TextEncoder();
+    const localParts = [];
+    const centralParts = [];
+    let offset = 0;
+
+    for (const file of files) {
+      const bytes = new Uint8Array(await file.blob.arrayBuffer());
+      const nameBytes = encoder.encode(file.name);
+      const crc = crc32(bytes);
+      const size = bytes.length;
+      const dos = dosDateTime(file.modified || new Date());
+      const localHeader = makeZipLocalHeader(nameBytes, crc, size, dos);
+      const centralHeader = makeZipCentralHeader(nameBytes, crc, size, dos, offset);
+      localParts.push(localHeader, bytes);
+      centralParts.push(centralHeader);
+      offset += localHeader.length + bytes.length;
+    }
+
+    const centralOffset = offset;
+    const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0);
+    const end = makeZipEndRecord(files.length, centralSize, centralOffset);
+    return new Blob([...localParts, ...centralParts, end], { type: "application/zip" });
+  }
+
+  function dosDateTime(date) {
+    const d = date instanceof Date && !Number.isNaN(date.getTime()) ? date : new Date();
+    const year = Math.max(1980, Math.min(2107, d.getFullYear()));
+    const month = d.getMonth() + 1;
+    const day = d.getDate();
+    const hour = d.getHours();
+    const minute = d.getMinutes();
+    const second = Math.floor(d.getSeconds() / 2);
+    return {
+      time: ((hour & 31) << 11) | ((minute & 63) << 5) | (second & 31),
+      date: (((year - 1980) & 127) << 9) | ((month & 15) << 5) | (day & 31)
+    };
+  }
+
+  function setU16(view, offset, value) { view.setUint16(offset, value, true); }
+  function setU32(view, offset, value) { view.setUint32(offset, value >>> 0, true); }
+
+  function makeZipLocalHeader(nameBytes, crc, size, dos) {
+    const out = new Uint8Array(30 + nameBytes.length);
+    const view = new DataView(out.buffer);
+    setU32(view, 0, 0x04034b50);
+    setU16(view, 4, 20);
+    setU16(view, 6, 0x0800);
+    setU16(view, 8, 0);
+    setU16(view, 10, dos.time);
+    setU16(view, 12, dos.date);
+    setU32(view, 14, crc);
+    setU32(view, 18, size);
+    setU32(view, 22, size);
+    setU16(view, 26, nameBytes.length);
+    setU16(view, 28, 0);
+    out.set(nameBytes, 30);
+    return out;
+  }
+
+  function makeZipCentralHeader(nameBytes, crc, size, dos, offset) {
+    const out = new Uint8Array(46 + nameBytes.length);
+    const view = new DataView(out.buffer);
+    setU32(view, 0, 0x02014b50);
+    setU16(view, 4, 20);
+    setU16(view, 6, 20);
+    setU16(view, 8, 0x0800);
+    setU16(view, 10, 0);
+    setU16(view, 12, dos.time);
+    setU16(view, 14, dos.date);
+    setU32(view, 16, crc);
+    setU32(view, 20, size);
+    setU32(view, 24, size);
+    setU16(view, 28, nameBytes.length);
+    setU16(view, 30, 0);
+    setU16(view, 32, 0);
+    setU16(view, 34, 0);
+    setU16(view, 36, 0);
+    setU32(view, 38, 0);
+    setU32(view, 42, offset);
+    out.set(nameBytes, 46);
+    return out;
+  }
+
+  function makeZipEndRecord(count, centralSize, centralOffset) {
+    const out = new Uint8Array(22);
+    const view = new DataView(out.buffer);
+    setU32(view, 0, 0x06054b50);
+    setU16(view, 4, 0);
+    setU16(view, 6, 0);
+    setU16(view, 8, count);
+    setU16(view, 10, count);
+    setU32(view, 12, centralSize);
+    setU32(view, 16, centralOffset);
+    setU16(view, 20, 0);
+    return out;
+  }
+
+  async function exportBackup() {
+    if (!state.records.length) {
+      toast("还没有可导出的记录");
+      return;
+    }
+
+    try {
+      showProgress("正在导出备份...");
+
+      const list = [...state.records].sort((a, b) => {
+        const d = String(a.date || "").localeCompare(String(b.date || ""));
+        if (d !== 0) return d;
+        return Number(a.createdAt || 0) - Number(b.createdAt || 0);
+      });
+
+      const records = [];
+
+      for (let i = 0; i < list.length; i++) {
+        const rec = list[i];
+        setProgress("正在打包第 " + (i + 1) + " / " + list.length + " 条记录...");
+
+        records.push({
+          id: rec.id,
+          date: rec.date,
+          dateSource: rec.dateSource || "",
+          weight: rec.weight,
+          heightCm: rec.heightCm,
+          createdAt: rec.createdAt || Date.now(),
+          updatedAt: rec.updatedAt || null,
+          mainImage: await blobToDataURL(rec.mainBlob),
+          thumbImage: rec.thumbBlob ? await blobToDataURL(rec.thumbBlob) : ""
+        });
+      }
+
+      const payload = {
+        app: "before-after-fitness-record",
+        name: "形迹",
+        version: 1,
+        exportTime: new Date().toISOString(),
+        settings: {
+          heightCm: state.settings.heightCm || "",
+          durationMs: Number(state.settings.durationMs || 1000)
+        },
+        records
+      };
+
+      const json = JSON.stringify(payload, null, 2);
+      const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+      downloadBlob(blob, "形迹备份_" + todayInput() + ".json");
+
+      hideProgress();
+      toast("备份已导出");
+    } catch (err) {
+      console.error(err);
+      hideProgress();
+      alert("导出备份失败：" + err.message);
+    }
+  }
+
+  async function importBackupFromInput() {
+    const file = els.backupInput.files && els.backupInput.files[0];
+    if (!file) return;
+
+    const ok = confirm("导入备份会把备份中的记录写入当前浏览器数据库。ID 相同的记录会被覆盖，当前其他记录不会删除。继续吗？");
+    if (!ok) return;
+
+    try {
+      showProgress("正在读取备份文件...");
+
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      if (!data || !Array.isArray(data.records)) {
+        throw new Error("备份文件格式不正确");
+      }
+
+      if (data.settings) {
+        state.settings.heightCm = data.settings.heightCm || state.settings.heightCm || "";
+        state.settings.durationMs = Number(data.settings.durationMs || state.settings.durationMs || 1000);
+        saveSettings();
+      }
+
+      let imported = 0;
+      let failed = 0;
+
+      for (let i = 0; i < data.records.length; i++) {
+        const item = data.records[i];
+        setProgress("正在导入第 " + (i + 1) + " / " + data.records.length + " 条记录...");
+
+        try {
+          if (!item.mainImage) {
+            throw new Error("缺少图片数据");
+          }
+
+          const mainBlob = dataURLToBlob(item.mainImage);
+          const thumbBlob = item.thumbImage ? dataURLToBlob(item.thumbImage) : await makeThumbFromBlob(mainBlob);
+
+          const record = {
+            id: item.id || makeId(),
+            date: item.date || todayInput(),
+            dateSource: item.dateSource || "导入备份",
+            weight: Number(item.weight),
+            heightCm: Number(item.heightCm),
+            mainBlob,
+            thumbBlob,
+            createdAt: Number(item.createdAt || Date.now() + i),
+            updatedAt: item.updatedAt || Date.now()
+          };
+
+          if (!Number.isFinite(record.weight) || record.weight <= 0) {
+            record.weight = 0;
+          }
+
+          if (!Number.isFinite(record.heightCm) || record.heightCm <= 0) {
+            record.heightCm = Number(state.settings.heightCm || 0);
+          }
+
+          await dbPut(record);
+          state.selectedId = record.id;
+          imported++;
+        } catch (err) {
+          console.error("导入单条记录失败", err, item);
+          failed++;
+        }
+      }
+
+      await reloadRecords();
+      render();
+
+      hideProgress();
+      closeSettingsModal();
+
+      if (failed) {
+        toast("导入 " + imported + " 条，失败 " + failed + " 条");
+      } else {
+        toast("备份导入成功");
+      }
+    } catch (err) {
+      console.error(err);
+      hideProgress();
+      alert("导入备份失败：" + err.message);
+    } finally {
+      els.backupInput.value = "";
+    }
+  }
+
+  function blobToDataURL(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error || new Error("Blob 转换失败"));
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function dataURLToBlob(dataURL) {
+    const parts = String(dataURL).split(",");
+    if (parts.length < 2) {
+      throw new Error("图片数据格式不正确");
+    }
+
+    const header = parts[0];
+    const base64 = parts.slice(1).join(",");
+    const mimeMatch = header.match(/data:([^;]+);base64/i);
+    const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
+    const binary = atob(base64);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    return new Blob([bytes], { type: mime });
+  }
+
+  async function makeThumbFromBlob(blob) {
+    const img = await loadImageFromBlob(blob);
+    const maxSide = 700;
+    const iw = img.naturalWidth || img.width;
+    const ih = img.naturalHeight || img.height;
+    const scale = Math.min(1, maxSide / Math.max(iw, ih));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(iw * scale));
+    canvas.height = Math.max(1, Math.round(ih * scale));
+    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+    return await canvasToBlob(canvas, "image/jpeg", 0.82);
+  }
+
+  function openSettingsModal() { els.settingHeight.value = state.settings.heightCm || ""; els.settingDuration.value = String(state.settings.durationMs || 1000); showModal(els.settingsModal); }
+  function closeSettingsModal() { hideModal(els.settingsModal); }
+  function saveSettingsFromModal() { const heightCm = parseFloat(els.settingHeight.value), durationMs = parseInt(els.settingDuration.value, 10); state.settings.heightCm = Number.isFinite(heightCm) && heightCm > 0 ? String(Math.round(heightCm)) : ""; state.settings.durationMs = durationMs || 1000; saveSettings(); closeSettingsModal(); toast("设置已保存"); }
+  async function clearAllRecords() { const ok = confirm("确定清空全部照片记录吗？这个操作不能恢复。"); if (!ok) return; await dbClear(); state.selectedId = null; await reloadRecords(); render(); closeSettingsModal(); toast("已清空"); }
+  function showModal(el) { el.classList.add("show"); }
+  function hideModal(el) { el.classList.remove("show"); }
+  function showProgress(text) { els.progressText.textContent = text || "请稍候..."; showModal(els.progressModal); }
+  function setProgress(text) { els.progressText.textContent = text; }
+  function hideProgress() { hideModal(els.progressModal); }
+  let toastTimer = null;
+  function toast(text) { clearTimeout(toastTimer); els.toast.textContent = text; els.toast.classList.add("show"); toastTimer = setTimeout(() => els.toast.classList.remove("show"), 2200); }
+  function revokeListUrls() { state.urls.forEach(url => URL.revokeObjectURL(url)); state.urls = []; }
+  function revokeBatchUrls() { state.batchUrls.forEach(url => URL.revokeObjectURL(url)); state.batchUrls = []; }
+  function escapeHtml(value) { return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
+})();
+</script>
+</body>
+</html>
